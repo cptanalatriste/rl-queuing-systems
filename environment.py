@@ -1,6 +1,8 @@
 import rllearner
 import rlagent
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 ACCEPT_ACTION = 1
 REJECT_ACTION = 0
@@ -54,6 +56,26 @@ class QueuingEnvironment:
         return selected_action, new_state, episode_finished, reward
 
 
+def plot_policy(rl_learner, environment, filename):
+    policy_data = np.zeros((len(environment.priorities), environment.num_of_servers + 1))
+
+    for priority in environment.priorities:
+        for free_servers in range(environment.num_of_servers + 1):
+            selected_action = rl_learner.select_action(system_state=(free_servers, priority))
+            policy_data[priority, free_servers] = selected_action
+
+    ax = sns.heatmap(policy_data, cmap="YlGnBu", xticklabels=range(environment.num_of_servers + 1),
+                     yticklabels=environment.priorities)
+    ax.set_title('Policy (0 Reject, 1 Accept)')
+    ax.set_xlabel('Number of free servers')
+    ax.set_ylabel('Priority')
+
+    plt.savefig(filename)
+    plt.close()
+
+    print("Plot saved at: " + filename)
+
+
 def main():
     # max_steps = int(1e6)
     max_steps = 1000
@@ -67,7 +89,10 @@ def main():
                                               rewards=rewards, free_probability=free_probability)
     rl_learner = rllearner.RLLearner(total_training_steps=max_steps)
     rl_agent = rlagent.RLAgent(actions=[REJECT_ACTION, ACCEPT_ACTION])
-    rl_learner.start(environment=queueing_environment, rl_agent=rl_agent)
+    # rl_learner.start(environment=queueing_environment, rl_agent=rl_agent)
+
+    filename = 'policy.png'
+    plot_policy(rl_agent, queueing_environment, filename=filename)
 
 
 if __name__ == "__main__":
