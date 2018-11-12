@@ -2,3 +2,6 @@
 *.xml
 *.pyc
 *.iml
+*.log
+*.out
+*.png
