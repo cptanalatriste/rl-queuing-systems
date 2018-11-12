@@ -9,7 +9,7 @@ import environment
 INPUT_NUMBER = 2
 HIDDEN_UNITS = 24
 
-MAX_STEPS = int(1e6)
+MAX_STEPS = 1000
 NUM_OF_SERVERS = 10
 PRIORITIES = np.arange(0, 4)
 REWARDS = np.power(2, np.arange(0, 4))
@@ -22,8 +22,8 @@ def main():
 
     logging_level = logging.DEBUG
 
-    total_training_steps = 10000
-    decay_steps = int(total_training_steps / 2)
+    total_training_steps = int(1e6)
+    decay_steps = int(total_training_steps / 4)
 
     train_frequency = 4
     batch_size = 32

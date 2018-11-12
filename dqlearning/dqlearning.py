@@ -35,7 +35,7 @@ class DeepQLearning(object):
             agent_wrapper.train(session=session, batch_size=self.batch_size)
 
             if training_step % self.transfer_frequency:
-                agent_wrappers.update_target_weights(session)
+                agent_wrapper.update_target_weights(session)
 
     def start(self, simulation_environment, agent_wrappers, enable_restore):
 
@@ -63,9 +63,7 @@ class DeepQLearning(object):
                 if episode_finished:
                     self.logger.debug("Episode finished!")
                     for wrapper in agent_wrappers:
-                        wrapper.agent.store_experience()
-                        wrapper.log_progress(global_counter=simulation_environment.global_counter,
-                                             training_step=training_step)
+                        wrapper.store_experience(simulation_environment)
 
                     simulation_environment.reset(agent_wrappers)
 

@@ -113,7 +113,7 @@ class DeepQLearner(object):
             self.replay_memory.consolidated_experience.size()) + " .Sampling: " + str(batch_size))
         return self.replay_memory.sample_transitions(batch_size)
 
-    def store_experience(self):
+    def store_experience(self, *_):
         self.logger.debug(self.name + "-Consolidating experience: " + str(self.episode_experience.size()))
         self.replay_memory.store_experience(self.episode_experience)
 
@@ -158,11 +158,6 @@ class DeepQLearner(object):
     def select_action(self, environment):
         """
         Explores the system using an epsilon-greedy policy.
-
-        :param system_state:
-        :param global_counter:
-        :param session:
-        :return:
         """
 
         system_state = environment.get_system_state()
