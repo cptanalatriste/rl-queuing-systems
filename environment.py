@@ -27,10 +27,13 @@ class AccessControlEnvironment:
         self.current_step = None
         self.current_priority = None
 
-    def reset(self, *_):
+    def reset(self, agents):
         self.current_step = 0
         self.set_system_state(current_free_servers=self.num_of_servers,
                               current_priority=np.random.choice(self.priorities))
+
+        for agent in agents:
+            agent.reset()
 
     def enact_action(self, selected_action):
         if self.current_free_servers > 0 and selected_action == ACCEPT_ACTION:

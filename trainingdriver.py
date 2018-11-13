@@ -19,9 +19,11 @@ FREE_PROBABILITY = 0.06
 
 
 def main():
+
+    counter_for_learning = int(MAX_STEPS * 10)
     # total_training_steps = int(1e6)
-    total_training_steps = 4000
-    decay_steps = int(total_training_steps / 4)
+    total_training_steps = counter_for_learning * 100
+    decay_steps = int(total_training_steps / 2)
 
     train_frequency = 4
     batch_size = 32
@@ -29,7 +31,6 @@ def main():
     discount_factor = 0.99
     learning_rate = 1e-4
 
-    counter_for_learning = int(total_training_steps / 100)
     transfer_frequency = counter_for_learning
     save_frequency = counter_for_learning * 0.1
 
@@ -121,5 +122,5 @@ def plot_policy():
 
 
 if __name__ == "__main__":
-    # main()
-    plot_policy()
+    main()
+    # plot_policy()

@@ -1,5 +1,6 @@
 import tensorflow as tf
 import os
+from tqdm import tqdm
 
 
 class DeepQLearning(object):
@@ -39,60 +40,68 @@ class DeepQLearning(object):
 
     def start(self, simulation_environment, agent_wrappers, enable_restore):
 
-        with tf.Session() as session:
-            initializer = tf.global_variables_initializer()
-            saver = tf.train.Saver()
+        with tqdm(total=self.total_training_steps) as progress_bar:
 
-            checkpoint_file = self.checkpoint_path + ".index"
-            if os.path.isfile(checkpoint_file) and enable_restore:
-                self.logger.info("Restoring checkpoint: " + checkpoint_file)
-                saver.restore(session, self.checkpoint_path)
-            else:
-                session.run(initializer)
+            with tf.Session() as session:
+                initializer = tf.global_variables_initializer()
+                saver = tf.train.Saver()
 
-            episode_finished = False
+                checkpoint_file = self.checkpoint_path + ".index"
+                if os.path.isfile(checkpoint_file) and enable_restore:
+                    self.logger.info("Restoring checkpoint: " + checkpoint_file)
+                    saver.restore(session, self.checkpoint_path)
+                else:
+                    session.run(initializer)
 
-            simulation_environment.global_counter = 0
-            simulation_environment.session = session
-            simulation_environment.reset(agent_wrappers)
+                episode_finished = False
 
-            while True:
-                training_step = self.training_step_var.eval()
-                if training_step >= self.total_training_steps:
-                    break
+                simulation_environment.global_counter = 0
+                simulation_environment.session = session
+                simulation_environment.reset(agent_wrappers)
 
-                simulation_environment.global_counter += 1
-                if episode_finished:
-                    self.logger.debug("Episode finished!")
-                    for wrapper in agent_wrappers:
-                        wrapper.store_experience(simulation_environment)
+                while True:
+                    training_step = self.training_step_var.eval()
+                    if training_step >= self.total_training_steps:
+                        break
 
-                    simulation_environment.reset(agent_wrappers)
+                    simulation_environment.global_counter += 1
+                    if episode_finished:
+                        self.logger.debug("Episode finished!")
+                        for wrapper in agent_wrappers:
+                            wrapper.store_experience(simulation_environment)
 
-                previous_state = simulation_environment.get_system_state()
+                        simulation_environment.reset(agent_wrappers)
 
-                self.logger.debug("Training step: %s  Global counter: %s",
-                                  str(training_step), str(simulation_environment.global_counter))
+                    previous_state = simulation_environment.get_system_state()
 
-                actions_performed, new_state, episode_finished, rewards = simulation_environment.step(
-                    rl_agents=agent_wrappers)
+                    self.logger.debug("Training step: %s  Global counter: %s",
+                                      str(training_step), str(simulation_environment.global_counter))
 
-                self.logger.debug("actions_performed %s new_state %s episode_finished %s", actions_performed, new_state,
-                                  episode_finished)
+                    actions_performed, new_state, episode_finished, rewards = simulation_environment.step(
+                        rl_agents=agent_wrappers)
 
-                for agent_wrapper in agent_wrappers:
-                    action_performed = actions_performed[agent_wrapper.name]
-                    reward = rewards[agent_wrapper.name]
-                    agent_wrapper.observe_action_effects(previous_state, action_performed, reward,
-                                                         new_state)
+                    self.logger.debug("actions_performed %s new_state %s episode_finished %s rewards %s",
+                                      actions_performed,
+                                      new_state,
+                                      episode_finished, rewards)
 
-                if simulation_environment.global_counter > self.counter_for_learning \
-                        and simulation_environment.global_counter % self.train_frequency == 0:
-                    self.logger.debug(
-                        "Triggering training: global_counter " + str(
-                            simulation_environment.global_counter) + " counter_for_learning: " + str(
-                            self.counter_for_learning) + " train_frequency " + str(self.train_frequency))
-                    self.train_agents(agent_wrappers=agent_wrappers, training_step=training_step, session=session)
+                    for agent_wrapper in agent_wrappers:
+                        action_performed = actions_performed[agent_wrapper.name]
+                        reward = rewards[agent_wrapper.name]
+                        agent_wrapper.observe_action_effects(previous_state, action_performed, reward,
+                                                             new_state)
 
-                if training_step % self.save_frequency:
-                    saver.save(session, self.checkpoint_path)
+                    if simulation_environment.global_counter > self.counter_for_learning \
+                            and simulation_environment.global_counter % self.train_frequency == 0:
+                        self.logger.debug(
+                            "Triggering training: global_counter " + str(
+                                simulation_environment.global_counter) + " counter_for_learning: " + str(
+                                self.counter_for_learning) + " train_frequency " + str(self.train_frequency))
+                        self.train_agents(agent_wrappers=agent_wrappers, training_step=training_step, session=session)
+                        progress_bar.update(1)
+
+                    if training_step % self.save_frequency:
+                        self.logger.debug(
+                            "Saving training progress at: " + self.checkpoint_path + " training_step " + str(
+                                training_step))
+                        saver.save(session, self.checkpoint_path)

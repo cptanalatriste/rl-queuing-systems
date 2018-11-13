@@ -81,6 +81,7 @@ class DeepQLearner(object):
         self.name = name
         self.episode_experience = EpisodeExperience()
         self.metric_catalogue = []
+        self.episode_rewards = 0
 
         self.actions = actions
 
@@ -102,10 +103,12 @@ class DeepQLearner(object):
             self.train_target_q, self.train_actions, self.train_loss, self.train_operation = self.build_training_operation(
                 learning_rate=learning_rate, global_step=global_step, variable_scope=self.name + '-train')
 
-    def new_episode(self):
+    def reset(self):
         self.episode_experience = EpisodeExperience()
+        self.episode_rewards = 0
 
     def observe_action_effects(self, state, action, reward, new_state):
+        self.episode_rewards += reward
         self.episode_experience.observe_action_effects(state, action, reward, new_state)
 
     def sample_transitions(self, batch_size):
@@ -114,7 +117,8 @@ class DeepQLearner(object):
         return self.replay_memory.sample_transitions(batch_size)
 
     def store_experience(self, *_):
-        self.logger.debug(self.name + "-Consolidating experience: " + str(self.episode_experience.size()))
+        self.logger.debug(self.name + "-Consolidating experience: " + str(
+            self.episode_experience.size()) + " Episode Rewards: " + str(self.episode_rewards))
         self.replay_memory.store_experience(self.episode_experience)
 
     def build_network(self, variable_scope, input_number, hidden_units):
