@@ -43,7 +43,9 @@ class DeepQLearning(object):
             initializer = tf.global_variables_initializer()
             saver = tf.train.Saver()
 
-            if os.path.isfile(self.checkpoint_path + ".index") and enable_restore:
+            checkpoint_file = self.checkpoint_path + ".index"
+            if os.path.isfile(checkpoint_file) and enable_restore:
+                self.logger.info("Restoring checkpoint: " + checkpoint_file)
                 saver.restore(session, self.checkpoint_path)
             else:
                 session.run(initializer)

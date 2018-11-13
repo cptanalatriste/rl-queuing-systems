@@ -1,8 +1,10 @@
 import logging
+import os
 
 import dqlagent
 import dqlearning
 import numpy as np
+import tensorflow as tf
 
 import environment
 
@@ -17,12 +19,8 @@ FREE_PROBABILITY = 0.06
 
 
 def main():
-    logging_mode = 'w'
-    enable_restore = False
-
-    logging_level = logging.DEBUG
-
-    total_training_steps = int(1e6)
+    # total_training_steps = int(1e6)
+    total_training_steps = 4000
     decay_steps = int(total_training_steps / 4)
 
     train_frequency = 4
@@ -41,9 +39,12 @@ def main():
     replay_memory_size = 100
 
     scenario = "access_control_"
-    log_filename = scenario + '_tech_debt_rl.log'
+    enable_restore = False
     checkpoint_path = './chk/' + scenario + '.ckpt'
 
+    log_filename = scenario + '_tech_debt_rl.log'
+    logging_mode = 'w'
+    logging_level = logging.DEBUG
     logger = logging.getLogger(scenario + "-DQNetwork-Training->")
     handler = logging.FileHandler(log_filename, mode=logging_mode)
     logger.addHandler(handler)
@@ -80,5 +81,45 @@ def main():
     dq_learner.start(access_control_environment, [developer_agent], enable_restore)
 
 
+def plot_policy():
+    scenario = "policy_analysis_rl"
+    checkpoint_path = './chk/' + 'access_control_' + '.ckpt'
+
+    log_filename = scenario + '_tech_debt_rl.log'
+    logging_mode = 'w'
+    logging_level = logging.DEBUG
+    logger = logging.getLogger(scenario)
+    handler = logging.FileHandler(log_filename, mode=logging_mode)
+    logger.addHandler(handler)
+    logger.setLevel(logging_level)
+
+    dev_name = "dq_learner"
+    developer_agent = dqlagent.DeepQLearner(name=dev_name,
+                                            actions=environment.ACTIONS,
+                                            input_number=INPUT_NUMBER, hidden_units=HIDDEN_UNITS,
+                                            logger=logger)
+
+    with tf.Session() as session:
+        saver = tf.train.Saver()
+
+        checkpoint_file = checkpoint_path + ".index"
+        if os.path.isfile(checkpoint_file):
+            logger.info("Restoring checkpoint: " + checkpoint_file)
+            saver.restore(session, checkpoint_path)
+
+        access_control_environment = environment.AccessControlEnvironment(logger=logger,
+                                                                          max_steps=MAX_STEPS,
+                                                                          num_of_servers=NUM_OF_SERVERS,
+                                                                          priorities=PRIORITIES,
+                                                                          rewards=REWARDS,
+                                                                          free_probability=FREE_PROBABILITY)
+        access_control_environment.global_counter = 0
+        access_control_environment.session = session
+
+        environment.plot_policy(rl_learner=developer_agent, environment=access_control_environment,
+                                filename=scenario + ".png")
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    plot_policy()

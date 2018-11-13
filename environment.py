@@ -27,10 +27,10 @@ class AccessControlEnvironment:
         self.current_step = None
         self.current_priority = None
 
-    def reset(self, rl_agents):
-        self.current_free_servers = self.num_of_servers
+    def reset(self, *_):
         self.current_step = 0
-        self.current_priority = np.random.choice(self.priorities)
+        self.set_system_state(current_free_servers=self.num_of_servers,
+                              current_priority=np.random.choice(self.priorities))
 
     def enact_action(self, selected_action):
         if self.current_free_servers > 0 and selected_action == ACCEPT_ACTION:
@@ -39,15 +39,21 @@ class AccessControlEnvironment:
         reward = self.rewards[self.current_priority] * selected_action
 
         busy_servers = self.num_of_servers - self.current_free_servers
-        self.current_free_servers += np.random.binomial(busy_servers, self.free_probability)
-        self.current_priority = np.random.choice(self.priorities)
+        available_servers = self.current_free_servers + np.random.binomial(busy_servers, self.free_probability)
+
+        self.set_system_state(current_free_servers=available_servers,
+                              current_priority=np.random.choice(self.priorities))
 
         return reward
+
+    def set_system_state(self, current_free_servers, current_priority):
+        self.current_free_servers = current_free_servers
+        self.current_priority = current_priority
 
     def get_system_state(self):
         return self.current_free_servers, self.current_priority
 
-    def step(self, rl_agents, **kwargs):
+    def step(self, rl_agents, **_):
         self.logger.debug(
             "Current step: " + str(self.current_step) + " Free servers: " + str(self.current_free_servers))
 
@@ -74,7 +80,8 @@ def plot_policy(rl_learner, environment, filename):
 
     for priority in environment.priorities:
         for free_servers in range(environment.num_of_servers + 1):
-            selected_action = rl_learner.select_action(system_state=(free_servers, priority))
+            environment.set_system_state(current_free_servers=free_servers, current_priority=priority)
+            selected_action = rl_learner.select_action(environment=environment)
             policy_data[priority, free_servers] = selected_action
 
     ax = sns.heatmap(policy_data, cmap="YlGnBu", xticklabels=range(environment.num_of_servers + 1),

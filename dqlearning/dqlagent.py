@@ -177,8 +177,8 @@ class DeepQLearner(object):
             return action
         else:
             action = np.argmax(q_values_from_pred)
-            self.logger.debug(self.name + "-Behaving greedy: %s q_values_from_pred: %s", str(action),
-                              str(q_values_from_pred))
+            self.logger.debug(self.name + "-Behaving greedy: %s q_values_from_pred: %s -system state: %s", str(action),
+                              str(q_values_from_pred), str(system_state))
             return action
 
     def build_training_operation(self, learning_rate, global_step, variable_scope):
