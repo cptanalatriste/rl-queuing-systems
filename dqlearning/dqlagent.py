@@ -17,6 +17,12 @@ class ExperienceReplayMemory(object):
         while self.consolidated_experience.size() > self.replay_memory_size:
             self.consolidated_experience.purge()
 
+    def observe_action_effects(self, state, action, reward, new_state):
+        self.consolidated_experience.observe_action_effects(state, action, reward, new_state)
+
+        while self.consolidated_experience.size() > self.replay_memory_size:
+            self.consolidated_experience.purge()
+
     def sample_transitions(self, batch_size):
         """
         Randomly sample a batch of experiences from the replay memory.
@@ -109,7 +115,7 @@ class DeepQLearner(object):
 
     def observe_action_effects(self, state, action, reward, new_state):
         self.episode_rewards += reward
-        self.episode_experience.observe_action_effects(state, action, reward, new_state)
+        self.replay_memory.observe_action_effects(state, action, reward, new_state)
 
     def sample_transitions(self, batch_size):
         self.logger.debug(self.name + "-Memory size: " + str(

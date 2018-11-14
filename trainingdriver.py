@@ -11,7 +11,8 @@ import environment
 INPUT_NUMBER = 2
 HIDDEN_UNITS = 24
 
-MAX_STEPS = 1000
+# MAX_STEPS = 1000
+MAX_STEPS = 100
 NUM_OF_SERVERS = 10
 PRIORITIES = np.arange(0, 4)
 REWARDS = np.power(2, np.arange(0, 4))

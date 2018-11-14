@@ -68,8 +68,8 @@ class DeepQLearning(object):
                     if episode_finished:
                         self.logger.debug("Episode finished!")
                         for wrapper in agent_wrappers:
-                            wrapper.store_experience(simulation_environment)
-
+                            self.logger.debug(
+                                "Agent: " + wrapper.name + " Episode Rewards: " + str(wrapper.episode_rewards))
                         simulation_environment.reset(agent_wrappers)
 
                     previous_state = simulation_environment.get_system_state()
